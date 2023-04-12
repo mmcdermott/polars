@@ -137,6 +137,17 @@ def test_value_counts_expr() -> None:
         [pl.col("id").value_counts(sort=True).first()]
     ).to_dict(False) == {"session": [1], "id": [{"id": 2, "counts": 2}]}
 
+def test_value_counts_groupby_struct() -> None:
+    df = pl.DataFrame(
+        {
+            "k": [0, 0, 0, 0],
+            "v": [1, 1, 2, 3],
+        }
+    )
+    val_counts = pl.col('v').value_counts()
+    new_struct = pl.struct([val_counts.struct.field('v'), val_counts.struct.field('counts')])
+    out = df.groupby('k').agg(new_struct).item().to_list()
+    assert set(out) == {{"v": 1, "counts": 2}, {"v": 2, "counts": 1}, {"v": 3, "counts": 1}}
 
 def test_value_counts_logical_type() -> None:
     # test logical type
